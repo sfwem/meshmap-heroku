@@ -4,6 +4,6 @@
   "repository": "https://github.com/sfwem/meshmap-heroku",
   "addons": [],
   "scripts": {
-    "postdeploy": "cp user-settings.ini meshmap/scripts/"
+    "postdeploy": "./postdeploy.sh"
   }
 }
