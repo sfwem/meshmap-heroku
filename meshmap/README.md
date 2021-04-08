@@ -1,6 +1,7 @@
 <!-- KG6WXC MeshMap README.md file -->
 <!-- May 2018 -->
-<img src="https://mapping.kg6wxc.net/meshmap/images/MESHMAP_LOGO.svg" style="float:left; vertical-align: middle;"/>
+<!-- <img src="https://mapping.kg6wxc.net/meshmap/images/MESHMAP_LOGO.svg" style="float:left; vertical-align: middle;"/> -->
+<img src="https://mapping.kg6wxc.net/meshmap/images/MeshBanner-TEST.png" width="600" style="float:left; vertical-align: middle;"/>
 <h1 style="float: left; vertical-align: middle;">MeshMap</h1><br/>  
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -8,7 +9,7 @@
 [![MattermostChat](https://img.shields.io/badge/Chat-Mattermost-blueviolet.svg)](https://mattermost.kg6wxc.net)  
 Automated mapping of [AREDN](https://arednmesh.org) Networks.  
 
-2016-2019 - Eric Satterlee / KG6WXC  
+2016-2020 - Eric Satterlee / KG6WXC  
 
 Addtional Credit to: Mark/N2MH and Glen/K6GSE for their work on this project and to the rest of the [AREDN](https://arednmesh.org) team, without them this would not be a project.  
 
@@ -23,13 +24,8 @@ Licensed under GPL v3 and later.
 (or equiv)  
 - **PHP5+**  
 - **mysqli PHP extension**   
-- **mysqlnd PHP extension**  
-- **openssl PHP extension**  
-(you may only need mysqlnd, it should be safe to enable both for now)  
-(One or more of these extensions may need to be enabled in php.ini)  
-(if you do not already have mysqlnd, you might need to install it, `apt-get install php[5 or 7]-mysqlnd`)  
-(<em>the requirement for the mysqlnd extension will be removed in the near future</em>)  
-- **MySQL/MariaDB**  
+- **MariaDB**  
+(MariaDB is preferred over Mysql due to inconsistencies between the 2)  
 (Other database systems are up to you)  
 - **An AREDN Mesh node available over the local network**  
 (Preferably connected to an AREDN network...)  
@@ -53,7 +49,7 @@ PHP is PHP after all.</blockquote>
 **Without a map tile server or static tiles, Mesh users without internet access on their systems may not see any map tiles.**  
 On the mesh, you *cannot* expect the client to have internet access in order to retrieve the tiles, you must provide them yourself, one way or another.  
 The main map webpage will try to check for internet access and load the appropriate maps.  
-Default internet map tile servers have been provided in the ini file, but the ini file will need tweaking if you want to use "local" tile servers or directories.  
+Default internet map tile servers can be modified in your user-settings.ini file, if you want to use "local" tile servers or directories.  
 
 It is *way* beyond the scope of this README file to help in setting up a map tile server.  
 You are unfortunatly on your own there.  
@@ -144,7 +140,7 @@ Even without map tiles, you should still see your data being mapped out.
 Copy the cronscript.sh-default to where ever you like and rename it to just cronscript.sh (or whatever you want).  
 Then, you **must** edit the cronscript.sh file and make sure the path it uses to get to the scripts directory is correct!  
 After that, create a cron entry with `crontab -e`  
-A cron entry is as easy as this: `* * * * * /home/pi/cronscript.sh`  
+A cron entry is as easy as this: `* * * * * /home/pi/meshmap/cronscript.sh`  
     <blockquote style="background: #d3d3d3; margin-right: 30%;">You <em>can</em> safely run the script every minute in cron like this.<br>It won't actually do anything unless the intervals specified in the ini file have expired.</blockquote>  
   
 ## Updating the scripts
@@ -189,12 +185,16 @@ The meshmap.css file will override the -default.css file.
 - [x] Make the numbers for stations and links in the attribution bar a bit more accurate I hope.  
 - [x] Add a "Ruler" to allow for measuring of distance and bearings.  
     (elevation plot of the line drawn via this ruler will hopefully come next)  
+- [x] Station PopUps now have tabs for the different sections (main, services, links).  
+- [x] Search and zoom to a node now implemented.  
+- [x] Import/Export the "Non-Mesh" Markers via CSV file.  
+- [ ] Add button for "node_report.php" (List View) on the Map. (and a link to the map from node_report).  
 - [ ] Change css file for the "?" slide-out menu.  
 - [ ] Make "Parallel Threads" work again in get-map-info script, with limits on how many can be run at once.  
     (this will greatly speed up network polling)  
-- [ ] Implement N2MH's "Link aging" idea(s).  
 - [ ] The "Planning" Tab.  
-- [ ] Make it so other networks can export their data for use on a "Mega Map" type page. :)
+- [ ] Make it so other networks can export their data for use on a "Mega Map" type page. :)  
+- [ ] ~~Implement N2MH's "Link aging" idea(s)~~. (Temporal Databases are crazy! this may not ever happen)  
   
 ## Contributing
 ----------

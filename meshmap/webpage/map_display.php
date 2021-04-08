@@ -123,12 +123,15 @@ function testForInet() {
 <meta property="og:sitename" content="KG6WXC MeshMap">
 <meta property="og:locale" content="en-US">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Map your local Amatuer Radio MESH Network">
+<meta property="og:title" content="Map your local Amateur Radio MESH Network">
 <meta property="og:description" content="The KG6WXC MeshMap is Automated Mapping of AREDN MESH Networks.">
+
 EOD;
 
-echo "<meta property='og:url' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "'>\n";
-echo "<meta property='og:image' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "/images/MESHMAP_LOGO.png'>\n";
+//echo "<meta property='og:url' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "'>\n";
+//echo "<meta property='og:image' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "/images/MESHMAP_LOGO.png'>\n";
+$page .= "<meta property='og:url' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "'>\n";
+$page .= "<meta property='og:image' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "/images/MESHMAP_LOGO.png'>\n";
 
 $page .= <<< EOD
 <script src='javascripts/ping.min.js'></script>
@@ -232,7 +235,7 @@ echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' . "\n
 echo '<meta property="og:sitename" content="KG6WXC MeshMap">' . "\n";
 echo '<meta property="og:local" content="en-US">' . "\n";
 echo '<meta property="og:type" content="website">' . "\n";
-echo '<meta property="og:title" content="Map your local Amatuer Radio MESH Network">' . "\n";
+echo '<meta property="og:title" content="Map your local Amateur Radio MESH Network">' . "\n";
 echo '<meta property="og:description" content="The KG6WXC MeshMap is Automated Mapping of AREDN MESH Networks.">' . "\n";
 //echo '<meta property="og:url" content="http://kg6wxc-srv.local.mesh/meshmap">' . "\n";
 echo "<meta property='og:url' content='" . $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['CONTEXT_PREFIX'] . "'>\n";
@@ -255,9 +258,8 @@ if (!$mesh) {
     echo "<script src='//bbecquet.github.io/Leaflet.PolylineOffset/leaflet.polylineoffset.js'></script>\n";
     echo "<script src='//api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>\n";
     echo "<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet'>\n";
-    echo "<script src='//ismyrnow.github.io/leaflet-groupedlayercontrol/src/leaflet.groupedlayercontrol.js'></script>\n";
-    echo "<link rel='stylesheet' href='//ismyrnow.github.io/leaflet-groupedlayercontrol/src/leaflet.groupedlayercontrol.css'>\n";
     echo "<link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.0.10/css/all.css' integrity='sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg' crossorigin='anonymous'>\n";
+
 
 }else {
     echo "<link href='css/leaflet.css' rel='stylesheet'>\n";
@@ -265,15 +267,20 @@ if (!$mesh) {
     echo "<script src='javascripts/leaflet.polylineoffset.js'></script>\n";
     echo "<script src='javascripts/Leaflet.fullscreen.min.js'></script>\n";
     echo "<link href='css/leaflet.fullscreen.css' rel='stylesheet'>\n";
-    echo "<script src='javascripts/leaflet.groupedlayercontrol.min.js'></script>\n";
-    echo "<link href='css/leaflet.groupedlayercontrol.min.css' rel='stylesheet'>\n";
     echo "<link href='javascripts/fontawesome-all.css' rel='stylesheet'>\n";
 }
+echo "<script src='javascripts/leaflet.groupedlayercontrol.js'></script>\n";
+echo "<link rel='stylesheet' href='css/leaflet.groupedlayercontrol.css'>\n";
 echo "<script src='javascripts/leaflet-hash.js'></script>\n";
 echo "<script src='javascripts/L.Control.SlideMenu.js'></script>\n";
 echo "<link href='css/L.Control.SlideMenu.css' rel='stylesheet'>\n";
 echo "<script src='javascripts/leaflet-ruler.js'></script>\n";
 echo "<link rel='stylesheet' type='text/css' href='css/leaflet-ruler.css'>\n";
+echo "<link rel='stylesheet' href='css/leaflet-search.css'>\n";
+echo "<script src='javascripts/leaflet-search.src.js'></script>\n";
+echo "<!-- SPIDERFY ( https://github.com/robertleeplummerjr/OverlappingMarkerSpiderfier-Leaflet ) -->\n";
+echo "<script src='javascripts/spiderfy.js'></script>\n";
+
 
 /*
  * check for the users custom.css files and use them if exists...
@@ -318,7 +325,7 @@ if (isset($USER_SETTINGS['map_iFrame_Enabled']) && ($USER_SETTINGS['map_iFrame_E
     	echo $GLOBALS['map_div_embedded'];
     }else {
     	echo "<div id='meshmap'>\n"; // Closing tag at end of primary routine
-    	echo "<div id='mapid'></div>\n";
+    	echo "<div id='mapid'><div id='spiderfyActive'>SPIDERFY ACTIVE</div></div>\n";
     }
 }else {
     echo "<div id='meshmap'>\n"; // Closing tag at end of primary routine
@@ -370,7 +377,7 @@ if (isset($GLOBALS['hide_admin'])) {
 }
 
 if (isset($USER_SETTINGS['map_iFrame_Enabled']) && !($USER_SETTINGS['map_iFrame_Enabled'])) {
-	echo "<div id='mapid'></div>\n";
+	echo "<div id='mapid'><div id='spiderfyActive'>SPIDERFY ACTIVE</div></div>\n";
 }
 
 //$numNodes = count($NodeList);	// WXC change: this was giving the wrong number.
@@ -408,11 +415,9 @@ $Content .= add_MapLayers();
 $Content .= add_MapImages($numNodes, $numLinks, $numMarkers);
 $Content .= create_MapLayers($numNodes, $numLinks, $numMarkers);
 $Content .= create_MapOverlays($numNodes, $numLinks, $numMarkers);
-//        echo $Content;
-//        $Content = "";
+$Content .= create_MapImage();
 $Content .= build_NodesAndLinks($NodeList, $TopoList, $MarkerList);
 $Content .= create_MapLegend();
-$Content .= create_MapImage();
 $Content .= show_MapMarkerDetails($numNodes, $numLinks, $numMarkers, $numNodesTotal, $numLinksTotal);
 $Content .= instantiate_Map();
 /*

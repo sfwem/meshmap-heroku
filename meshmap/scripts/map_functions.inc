@@ -163,11 +163,12 @@ function load_ServiceList($serviceList)
         {
             //WXC 6-30-2017: removed links for services that have no link
             if ($value == NULL) {
-                $serviceList .= '<br>'. $key;
+                //$serviceList .= "<br>". $key;
+                $serviceList .= $key;
             }else {
                 //WXC 6-30-2017: Moved <br> from after link to before the link,
                 //made the pop up look better.
-                $serviceList .= "<br><a href='" . $value . "' target='service'>" . $key . "</a>";
+                $serviceList .= "<br><a href=\"" . $value . "\" target=\"service\">" . $key . "</a>";
             }
         }
     }
@@ -196,7 +197,7 @@ function load_LinkList($NodeList, $TopoList)
     {
         foreach ($TopoList as $value)
         {
-            if ($value['nodelat'] && $value['linklon'])
+            if ((isset($value['nodelat'])) && (isset($value['linklon'])))
                 //if there's no location info ignore the entry
             {
                 $node_lat = $value['nodelat'];
@@ -256,12 +257,17 @@ function load_LinkList($NodeList, $TopoList)
                 }
                 //this is for the "other" DTD links
                 //using other wireless tech to create links that are seen as "DTD" by the AREDN software
+                //
+                // this is also some (all) tunnels now after 3.20.3 changes
+                // TODO: check this!
                 if ($value['cost'] == 0.1 && $value['distance'] > 0.7)
                 {
                     $display_color = $MESH_SETTINGS['DTD_Link_Plus'];
                     $dtd = 1;
-                    $display_opacity = 0.3;
-                    $display_weight = 0.3;
+                    //$display_opacity = 0.3;
+                    $display_opacity = 1.0;
+                    //$display_weight = 0.3;
+                    $display_weight = 1.0;
                     $map_LayerAssigned = 'dtdLinks';
                 }
                 //find the "infinite cost" links (they show as "INFINITE" in the olsr files the other script changes that to 99.99)
@@ -309,8 +315,8 @@ function load_LinkList($NodeList, $TopoList)
                     $linkList .= 'L.polyline([[' . $node_lat . ',' . $node_lon . '],[' . $link_lat .
                         ',' . $link_lon . ']], {color: "' . $display_color . '", opacity: ' . $display_opacity .
                         ', weight: ' . $display_weight . ', offset: ' . $display_offset . '})
-						.bindPopup("<strong>' .  $nodeName . '</strong> to <strong>' . $linkName . '</strong><br><strong>Cost</strong>: ' .
-                        $value['cost'] . '")
+						.bindPopup("<div class=\"linkPopupContent\"><strong>' .  $nodeName . '</strong> to <strong>' . $linkName . '</strong><br><strong>Cost</strong>: ' .
+                        $value['cost'] . '</div>")
 						.addTo(' . $map_LayerAssigned . '),' . "\n";
 
                 }
@@ -360,7 +366,7 @@ function load_LinkedTO($node_info, $TopoList)
         foreach ($TopoList as $value)
         {
             //if there's no location info (at each end of the link) ignore the entry
-            if ($value['nodelat'] && $value['linklon'])
+        	if ((isset($value['nodelat'])) && (isset($value['linklon'])))
             {
                 
                 //this is the section that is exploding in php7.2.3
@@ -446,7 +452,7 @@ function build_Marker($node_info, $node_ServiceList, $node_LinkedList, $node_Fir
 	
     
 	$markerList = '';
-    $nodeUrl = "<NodeTitle><a href='http://" . $node_info['node'] . ".local.mesh:8080' target='node'>" . $node_info['node'] .
+    $nodeUrl = "<NodeTitle><a href=\"http://" . $node_info['node'] . ".local.mesh:8080\" target=\"node\">" . $node_info['node'] .
         "</a></NodeTitle>";
 
     //Now we look at the 'channel' value, for each node, from the node_info database.
@@ -511,41 +517,90 @@ function build_Marker($node_info, $node_ServiceList, $node_LinkedList, $node_Fir
     /*
     * Now build the marker
     */
-    if ($node_ServiceList)
-    {
-        $node_ServiceList = '<hr><Strong>Services:</Strong>' . $node_ServiceList;
-    }
+    
     if ($node_LinkedList)
     {
-        $node_LinkedList =
-            '<hr><Strong>Linked to:<br>Node Name (cost to/from) distance bearing</Strong><br>' . $node_LinkedList;
+    	$node_LinkedList = '<Strong>Node Name (cost to/from) distance bearing</Strong><br>' . $node_LinkedList;
     }
-    $markerList .= "L.marker([" . $node_info['lat'] . "," . $node_info['lon'] . "], {title: '" . $node_info['node'] .
-        "', icon: " . $icon . "}).bindPopup(\" " . $nodeUrl . " (" . $band . ")<br>" . $node_info['lat'] .
-        ", " . $node_info['lon'] . "<br>SSID: " . $node_info['ssid'] . "<br>Channel: " . $node_info['channel'] .
-        ", Bandwidth: " . $node_info['chanbw'] . "<br>" . $node_info['model'] . "<br>" . $firmware .
-        //"<br>Last Polled: " . $node_info['last_seen'] . '<br>' . "Uptime: " . $node_info['uptime'] . '<br>';
-        
-        //timezone fixes - wxc 11-26-2018
-		"<br>Last Polled: " . date_format($nodeLastSeen, 'Y-m-d H:i:s T') . '<br>' . "Uptime: " . $node_info['uptime'] . '<br>';
-    //dot
-    if ($node_info['loadavg'] !== "Not Available") {
-    	$loadavgs = unserialize($node_info['loadavg']);
-    	//var_dump($loadavgs);
-    	$markerList .= 'LoadAvg: 1 min ' . $loadavgs[0] . ', 5 min ' . $loadavgs[1] . ', 15 min ' . $loadavgs[2] . "<br>";
+    
+    //add java variable to hold the "main tab" info
+    //*** node names used in these variables must have all dashes converted to underscores!! ***
+    //*** they also must be outside of the $markerList, just echo them out for now since it'll just work! ***
+    // TODO: remove these echos and do it properly
+    echo "<script>\n";
+    echo "var popupTabs_" . str_replace("-", "_", $node_info['node']) . " = '<div class=\"popupTabs\"><div class=\"popupTab\" id=\"popupTab-Main\">" .
+        "<div class=\"popupTabContent\">" . $nodeUrl . " (" . $band . ")<br>" .
+    	$node_info['lat'] . ", " . $node_info['lon'] . "<br>SSID: " . $node_info['ssid'] . "<br>Channel: " . $node_info['channel'] .
+    	", Bandwidth: " . $node_info['chanbw'] . "<br>" . $node_info['model'] . "<br>" . $firmware .
+    	"<br>Last Polled: ". date_format($nodeLastSeen, 'Y-m-d H:i:s T') . "<br>" . "Uptime: " . $node_info['uptime'] . "<br>";
+    	if ($node_info['loadavg'] !== "Not Available") {
+    		$loadavgs = unserialize($node_info['loadavg']);
+    		//var_dump($loadavgs);
+    		if (is_array($loadavgs)) {
+    			echo 'LoadAvg: 1 min ' . $loadavgs[0] . ', 5 min ' . $loadavgs[1] . ', 15 min ' . $loadavgs[2] . "<br></div></div>';" . "\n";
+    		}else {
+    			echo "</div></div>';" . "\n";
+    		}
+    	}else {
+    		echo "</div></div>';" . "\n";
+    	}
+    
+    //add the "services tab" info to the java variable if it is available
+    if ($node_ServiceList) {
+    	echo "popupTabs_" . str_replace("-", "_", $node_info['node']) .
+	   		" += '<div class=\"popupTab\" id=\"popupTab-Services\"><div class=\"popupTabContent\">" .
+    		$node_ServiceList . "</div></div>';" . "\n";
     }
-    $markerList .= $node_ServiceList . $node_LinkedList . "\",{ maxWidth: 500 } ).addTo(" . $AssignedLayer . ") ,\n"; // Close out this node
-    /*
-    * If Upgrade Suggested add Node to that layer
-    */
+
+    //add the "links tab" info to the java variable if it is available
+    if ($node_LinkedList) {
+    	echo "popupTabs_" . str_replace("-", "_", $node_info['node']) .
+    		" += '<div class=\"popupTab\" id=\"popupTab-Links\"><div class=\"popupTabContent\">" .
+    		$node_LinkedList . "</div></div>';" . "\n";
+    }else {
+    	echo "popupTabs_" . str_replace("-", "_", $node_info['node']) .
+    	" += '<div class=\"popupTab\" id=\"popupTab-Links\"><div class=\"popupTabContent\">" .
+    	"This node has no links, it may be powered off, old data, no longer linked to the network or otherwise having problems" .
+    	"</div></div>';" . "\n";
+    }
+    
+    //complete the popup div stuff
+    echo "popupTabs_" . str_replace("-", "_", $node_info['node']) . " += '<ul class=\"popupTabs-link\">" .
+    	"<li class=\"popupTab-link\"><a href=\"#popupTab-Main\"><span>Main</span></a></li>";
+    if ($node_ServiceList) {
+    	echo "<li class=\"popupTab-link\"><a href=\"#popupTab-Services\"><span>Services</span></a></li>";
+    }
+    echo "<li class=\"popupTab-link\"><a href=\"#popupTab-Links\"><span>Links</span></a></li></ul></div>';\n";
+    
+    //*** close the additional <script> tag! ***
+    echo "</script>\n";
+    
+    //*now* create the marker
+    $markerList .= "oms.addMarker(L.marker([" . $node_info['lat'] . "," . $node_info['lon'] . "], {title: '" . $node_info['node'] .
+		"', icon: " . $icon . "}).bindPopup(popupTabs_" . str_replace("-", "_", $node_info['node']) .
+		", { maxWidth: 500 } ).addTo(" . $AssignedLayer . ")) ,\n";
+
+    //
+    // If Upgrade Suggested add Node to that layer and change the popup
+    //
     if ($node_FirmwareStatus > 0)
     {
         $markerList .= "L.marker([" . $node_info['lat'] . "," . $node_info['lon'] . "], {title: '" .
             $node_info['node'] . "', icon: " . (($node_FirmwareStatus == 1) ? "redCircle" :
-                "orangeCircle") . "}).bindPopup(\" " . $nodeUrl . " (" . $band . ")<br>" . $node_info['model'] .
+            "orangeCircle") . "}).bindPopup('<div class=\"popupTabs-fw\">" . 
+            (($node_FirmwareStatus == 1) ? "**** FIRMWARE UPDATE NEEDED ****" : "**** EXPERIMENTAL FIRMWARE ****") .
+            "<div class=\"popupTab\"><div class=\"popupTabContent-fw\"> " .
+            $nodeUrl . " (" . $band . ")<br>" . $node_info['model'] .
             "<br>" . $firmware . "<br>" . (($node_FirmwareStatus == 1) ?
-                "Software upgrade is highly recommended" : "Experimental") . " \").addTo(upgradeStations) ,\n";
+            "<br><strong>Software upgrade is <em>highly</em> recommended!</strong><br>" .
+            "<br>Current Stable AREDN version is: " . $GLOBALS['USER_SETTINGS']['current_stable_fw_version'] . "<br>" .
+            "<br>Please visit: <a href=\"http://downloads.arednmesh.org/firmware/html/stable.html\">" .
+            "arednmesh.org</a> to find the proper firmware." : "Experimental Firmware<br><br>" .
+            "The most recent nightly build can be found at:<br><a href=\"http://downloads.arednmesh.org/snapshots/trunk/\">" .
+            "http://downloads.arednmesh.org/snapshots/trunk/</a>") .
+        	"</div></div></div>').addTo(upgradeStations) ,\n";
     }
+
 
     return $markerList;
 }
@@ -603,9 +658,10 @@ function buildStationMarker($Marker)
     * Now build the marker
     */
     $markerList = "L.marker([" . $Marker['lat'] . "," . $Marker['lon'] . "], {title: '" . $Marker['name'] .
-        "', icon: " . $icon . "}).bindPopup(\" " . $Marker['name'] . "<br>" . $Marker['description'] .
-        "<br>" . $Marker['lat'] . ", " . $Marker['lon'] . "<br>TYPE: " . $Marker['type'] . "\")
-        .addTo(" . $AssignedLayer . ") ,\n";
+        "', icon: " . $icon . "}).bindPopup('<div class=\"popupTabs-nonmesh\">" . $Marker['name'] .
+        "<div class=\"popupTab\"><div class=\"popupTabContent-fw\">" .
+        $Marker['name'] . "<br>" . $Marker['description'] .
+        "<br>" . $Marker['lat'] . ", " . $Marker['lon'] . "<br>TYPE: " . $Marker['type'] . "</div></div></div>').addTo(" . $AssignedLayer . ") ,\n";
 
     return $markerList;
 }
@@ -911,6 +967,13 @@ function create_MapLayers($numNodes, $numLinks, $numMarkers)
     var fiveGHzStations = new L.LayerGroup();
     var otherStations = new L.LayerGroup();
     var upgradeStations = new L.LayerGroup();\n
+
+	var allStations = L.layerGroup([
+		nineHundredMHzStations,
+		twoGHzStations,
+		threeGHzStations,
+		fiveGHzStations,
+		otherStations]);
 ";
 
     if ($numLinks > 0)
@@ -1091,6 +1154,30 @@ function create_MapImage()
 			fullscreenControl: true
 	    });\n\n
 	}
+	//SPIDERFY
+	var oms = new Spiderfy(map);
+
+	oms.disable();
+	map.on('zoomend', function(e) {
+		currZoom = e.target._zoom;
+		if(currZoom >= 12) {
+			oms.enable();
+			document.getElementById('spiderfyActive').style.visibility = 'visible';
+			oms.addListener('activate', function(markers) {
+				for(var i = 0; i < markers.length; i++) {
+					markers[i].closePopup();
+				}
+			});
+		}else {
+			oms.disable();
+			document.getElementById('spiderfyActive').style.visibility = 'hidden';
+			oms.removeListener('activate', function(markers) {
+				for(var i = 0; i < markers.length; i++) {
+					markers[i].closePopup();
+				}
+			});
+		}
+	});
 ";
 
     return $Content;
@@ -1175,15 +1262,45 @@ map.fullscreenControl.setPosition('verticalcenterleft');
 EOD;
 
     $Content .= <<< EOD
-//the ruler
-var rulerOptions = {position: 'verticalcenterleft',
-	lengthUnit: {
-		factor: 0.621371,
-		display: 'Miles',
-		decimal: 3}
-	};
-    L.control.ruler(rulerOptions).addTo(map);
-    document.getElementById('ruler').title = 'Ruler\\n(ESC 1x to stop, 2x to remove)';
+//********* "VIEW AS LIST" button ***********
+	//view as list (node_report.php)
+	L.Control.viewAsList = L.Control.extend({
+		options: {
+			position: 'verticalcenterleft'
+		},
+		onAdd: function(map) {
+
+			var viewAsListControl = L.DomUtil.create('div', 'leaflet-control-custom leaflet-bar');
+			viewAsListControl.style.backgroundColor = 'white';
+			viewAsListControl.style.width = '30px';
+			viewAsListControl.style.height = '30px';
+			viewAsListControl.title = 'View as list (node report)';
+			var link = L.DomUtil.create('a', 'leaflet-bar-part leaflet-bar-part-single', viewAsListControl);
+			var listIcon = L.DomUtil.create('div', 'viewAsListControl', link);
+			listIcon.style.fontSize = '20px';
+			listIcon.style.verticalAlign = 'middle';
+
+			viewAsListControl.onclick = function() {
+				window.location = "node_report.php"
+			}
+			return viewAsListControl;
+		}
+	});
+	L.control.viewAsList = function(opts) {
+		return new L.Control.viewAsList(opts);
+	}
+	L.control.viewAsList().addTo(map);
+//*********** END "VIEW AS LIST" button *************
+
+
+//the search button
+L.control.search({
+	layer: allStations,
+	initial: false,
+	zoom: 16,
+	position: 'verticalcenterleft',
+	hideMarkerOnCollapse: true
+}).addTo(map);
 
 //the watermark logo
 L.Control.Watermark = L.Control.extend({
@@ -1216,12 +1333,7 @@ L.control.watermark({position: 'bottomright'}).addTo(map);
      */
     legend.addTo(map);
 	legendHidden.addTo(map);
-    /*
-     * Layer Control
-     */
-    var layerControls = L.control.groupedLayers(baseLayers, groupedOverlays, {position: 'verticalcenterleft'}).addTo(map);
-	L.DomEvent.disableClickPropagation(layerControls._container);
-	L.DomEvent.disableScrollPropagation(layerControls._container);
+
     /*
      * Scale Control
      */
@@ -1285,6 +1397,24 @@ EOD;
 	/* Attribution */
 	//attributionCtrl({position: 'bottomleft'}).addTo(map);\n
     
+    //the left side controls go in the order they are added.
+    //we want the ruler and the layers control to be the last two on the bottom
+    $Content .= <<< EOD
+	//the ruler
+	var rulerOptions = {position: 'verticalcenterleft',
+	lengthUnit: {
+		factor: 0.621371,
+		display: 'Miles',
+		decimal: 3}
+	};
+    L.control.ruler(rulerOptions).addTo(map);
+    document.getElementById('ruler').title = 'Ruler\\n(ESC 1x to stop, 2x to remove)';
+
+    //Grouped Layer Control
+    var layerControls = L.control.groupedLayers(baseLayers, groupedOverlays, {position: 'verticalcenterleft'}).addTo(map);
+	L.DomEvent.disableClickPropagation(layerControls._container);
+	L.DomEvent.disableScrollPropagation(layerControls._container);
+EOD;
     return $Content;
 }
 ?>
